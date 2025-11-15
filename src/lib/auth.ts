@@ -1,47 +1,29 @@
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { eq } from "drizzle-orm";
 import NextAuth from "next-auth";
-import { Adapter } from "next-auth/adapters";
 import GitHubProvider from "next-auth/providers/github";
 
 import { env } from "@/env.mjs";
-import { db, users } from "@/lib/schema";
-import { stripeServer } from "@/lib/stripe";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db) as Adapter,
   providers: [
     GitHubProvider({
       clientId: env.GITHUB_ID,
       clientSecret: env.GITHUB_SECRET,
     }),
   ],
+  // Note: Database adapter removed for Sanity integration
+  // Session will use JWT by default
   callbacks: {
-    async session({ session, user }) {
-      if (!session.user) return session;
-
-      session.user.id = user.id;
-      session.user.stripeCustomerId = user.stripeCustomerId;
-      session.user.isActive = user.isActive;
-
-      return session;
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id || user.email || "";
+      }
+      return token;
     },
-  },
-  events: {
-    createUser: async ({ user }) => {
-      if (!user.email || !user.name) return;
-
-      await stripeServer.customers
-        .create({
-          email: user.email,
-          name: user.name,
-        })
-        .then(async (customer) =>
-          db
-            .update(users)
-            .set({ stripeCustomerId: customer.id })
-            .where(eq(users.id, user.id!)),
-        );
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = (token.id as string) || token.sub || "";
+      }
+      return session;
     },
   },
 });
