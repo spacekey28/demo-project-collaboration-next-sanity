@@ -16,9 +16,7 @@
 - 📘 Typescript
 - 🎨 Tailwind CSS 4 - Class sorting, merging and linting
 - 🛠️ Shadcn/ui - Customizable UI components
-- 💵 Stripe - Payment handler
 - 🔒 Next-auth - Easy authentication library for Next.js (GitHub provider)
-- 🛡️ Drizzle - ORM for node.js
 - 🔍 Zod - Schema validation library
 - 🧪 Jest & React Testing Library - Configured for unit testing
 - 🎭 Playwright - Configured for e2e testing
@@ -33,7 +31,6 @@
 - ⚙️ T3-env - Manage your environment variables
 - 🗺️ Sitemap & robots.txt
 - 💯 Perfect Lighthouse score
-- 💾 Neon database
 - 🌐 I18n with next-intl
 
 ## 🚀 Deployment
@@ -91,7 +88,6 @@ and open http://localhost:3000/ to see this app.
 .
 ├── .github                         # GitHub folder
 ├── .husky                          # Husky configuration
-├── prisma                          # Prisma schema and migrations
 ├── public                          # Public assets folder
 └── src
     ├── __tests__                   # Unit and e2e tests
