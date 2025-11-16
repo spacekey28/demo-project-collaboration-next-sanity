@@ -1,4 +1,9 @@
+import "@/styles/globals.css";
+
 import type { ReactNode } from "react";
+
+import { ThemeProvider } from "@/components/theme-provider";
+import { fonts } from "@/lib/fonts";
 
 export const metadata = {
   title: {
@@ -10,9 +15,13 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className="bg-background text-foreground min-h-screen">
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`bg-background text-foreground min-h-screen ${fonts.join(" ")}`}
+      >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
