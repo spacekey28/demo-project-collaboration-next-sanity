@@ -15,6 +15,15 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0]{
   navLinks
 }`;
 
+// Home Page Queries
+export const homePageHeroQuery = `*[_type == "pageHome"][0]{
+  _id,
+  _type,
+  heroTitle,
+  heroSubtitle,
+  cta
+}`;
+
 // Feature Queries
 export const allFeaturesQuery = `*[_type == "feature"] | order(title asc) {
   _id,

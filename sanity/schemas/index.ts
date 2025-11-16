@@ -4,6 +4,7 @@ import caseStudy from "./caseStudy";
 import contactSubmission from "./contactSubmission";
 import docPage from "./docPage";
 import feature from "./feature";
+import pageHome from "./pageHome";
 import pricingTier from "./pricingTier";
 import siteSettings from "./siteSettings";
 import testimonial from "./testimonial";
@@ -18,4 +19,5 @@ export const schemaTypes = [
   caseStudy,
   docPage,
   contactSubmission,
+  pageHome,
 ];
