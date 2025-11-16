@@ -1,0 +1,402 @@
+/**
+ * GROQ queries for fetching Sanity content
+ * These queries are type-safe and can be used with the Sanity client
+ */
+
+// Site Settings Queries
+export const siteSettingsQuery = `*[_type == "siteSettings"][0]{
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  siteTitle,
+  logo,
+  metaDescription,
+  navLinks
+}`;
+
+// Feature Queries
+export const allFeaturesQuery = `*[_type == "feature"] | order(title asc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  description,
+  icon,
+  category
+}`;
+
+export const featuredFeaturesQuery = `*[_type == "feature" && defined(category)] | order(_createdAt desc) [0...6] {
+  _id,
+  _type,
+  title,
+  description,
+  icon,
+  category
+}`;
+
+// Pricing Tier Queries
+export const allPricingTiersQuery = `*[_type == "pricingTier"] | order(monthlyPrice asc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  name,
+  monthlyPrice,
+  yearlyPrice,
+  features,
+  buttonLabel,
+  popular
+}`;
+
+// Testimonial Queries
+export const allTestimonialsQuery = `*[_type == "testimonial"] | order(_createdAt desc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  name,
+  company,
+  quote,
+  avatar,
+  rating
+}`;
+
+export const featuredTestimonialsQuery = `*[_type == "testimonial"] | order(_createdAt desc) [0...3] {
+  _id,
+  _type,
+  name,
+  company,
+  quote,
+  avatar,
+  rating
+}`;
+
+// Author Queries
+export const authorBySlugQuery = `*[_type == "author" && slug.current == $slug][0] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  name,
+  slug,
+  photo,
+  bio
+}`;
+
+export const allAuthorsQuery = `*[_type == "author"] | order(name asc) {
+  _id,
+  _type,
+  name,
+  slug,
+  photo,
+  bio
+}`;
+
+// Blog Post Queries
+export const blogPostsQuery = `*[_type == "blogPost" && defined(publishedAt)] | order(publishedAt desc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  "author": author->{
+    _id,
+    name,
+    slug,
+    photo,
+    bio
+  },
+  publishedAt,
+  updatedAt,
+  coverImage,
+  excerpt,
+  tags
+}`;
+
+export const blogPostBySlugQuery = `*[_type == "blogPost" && slug.current == $slug && defined(publishedAt)][0] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  "author": author->{
+    _id,
+    name,
+    slug,
+    photo,
+    bio
+  },
+  publishedAt,
+  updatedAt,
+  coverImage,
+  excerpt,
+  content,
+  tags
+}`;
+
+export const blogPostsPaginatedQuery = `*[_type == "blogPost" && defined(publishedAt)] | order(publishedAt desc) [$start...$end] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  "author": author->{
+    _id,
+    name,
+    slug,
+    photo,
+    bio
+  },
+  publishedAt,
+  updatedAt,
+  coverImage,
+  excerpt,
+  tags
+}`;
+
+export const blogPostsByTagQuery = `*[_type == "blogPost" && defined(publishedAt) && $tag in tags] | order(publishedAt desc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  "author": author->{
+    _id,
+    name,
+    slug,
+    photo,
+    bio
+  },
+  publishedAt,
+  updatedAt,
+  coverImage,
+  excerpt,
+  tags
+}`;
+
+export const blogPostsSearchQuery = `*[_type == "blogPost" && defined(publishedAt) && (
+  title match $searchTerm ||
+  excerpt match $searchTerm ||
+  array::compact(string::split((pt::text(content)), " "))[0..100] match $searchTerm ||
+  $searchTerm in tags
+)] | order(publishedAt desc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  "author": author->{
+    _id,
+    name,
+    slug,
+    photo,
+    bio
+  },
+  publishedAt,
+  updatedAt,
+  coverImage,
+  excerpt,
+  tags
+}`;
+
+export const allBlogTagsQuery = `array::unique(*[_type == "blogPost" && defined(publishedAt)].tags[] | order(@ asc))`;
+
+export const blogPostCountQuery = `count(*[_type == "blogPost" && defined(publishedAt)])`;
+
+// Case Study Queries
+export const allCaseStudiesQuery = `*[_type == "caseStudy"] | order(_createdAt desc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  client,
+  summary,
+  logo,
+  image,
+  body,
+  outcomes
+}`;
+
+export const caseStudyByIdQuery = `*[_type == "caseStudy" && _id == $id][0] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  client,
+  summary,
+  logo,
+  image,
+  body,
+  outcomes
+}`;
+
+// Documentation Queries
+export const allDocPagesQuery = `*[_type == "docPage"] | order(category asc, order asc, title asc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  category,
+  order,
+  "parent": parent->{
+    _id,
+    title,
+    slug
+  }
+}`;
+
+export const docPageBySlugQuery = `*[_type == "docPage" && slug.current == $slug][0] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  category,
+  order,
+  content,
+  "parent": parent->{
+    _id,
+    title,
+    slug
+  }
+}`;
+
+export const docPagesByCategoryQuery = `*[_type == "docPage" && category == $category] | order(order asc, title asc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  category,
+  order,
+  "parent": parent->{
+    _id,
+    title,
+    slug
+  }
+}`;
+
+export const docsSearchQuery = `*[_type == "docPage" && (
+  title match $searchTerm ||
+  array::compact(string::split((pt::text(content)), " "))[0..100] match $searchTerm
+)] | order(category asc, title asc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  category,
+  order,
+  "parent": parent->{
+    _id,
+    title,
+    slug
+  }
+}`;
+
+export const docNavigationQuery = `*[_type == "docPage"] | order(category asc, order asc, title asc) {
+  _id,
+  title,
+  slug,
+  category,
+  order,
+  "parent": parent->{
+    _id,
+    title,
+    slug
+  }
+}`;
+
+// Contact Submission Queries
+export const allContactSubmissionsQuery = `*[_type == "contactSubmission"] | order(submittedAt desc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  name,
+  email,
+  company,
+  message,
+  submittedAt,
+  status
+}`;
+
+export const contactSubmissionByIdQuery = `*[_type == "contactSubmission" && _id == $id][0] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  name,
+  email,
+  company,
+  message,
+  submittedAt,
+  status
+}`;
+
+export const contactSubmissionsByStatusQuery = `*[_type == "contactSubmission" && status == $status] | order(submittedAt desc) {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  name,
+  email,
+  company,
+  message,
+  submittedAt,
+  status
+}`;
+
+// Preview Mode Queries (for draft content)
+export const blogPostBySlugPreviewQuery = `*[_type == "blogPost" && slug.current == $slug][0] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  "author": author->{
+    _id,
+    name,
+    slug,
+    photo,
+    bio
+  },
+  publishedAt,
+  updatedAt,
+  coverImage,
+  excerpt,
+  content,
+  tags
+}`;
+
+export const docPageBySlugPreviewQuery = `*[_type == "docPage" && slug.current == $slug][0] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  category,
+  order,
+  content,
+  "parent": parent->{
+    _id,
+    title,
+    slug
+  }
+}`;
