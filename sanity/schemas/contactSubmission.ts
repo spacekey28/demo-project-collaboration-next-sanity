@@ -16,7 +16,7 @@ export default defineType({
       name: "email",
       type: "email",
       title: "Email",
-      validation: (Rule) => Rule.required().email(),
+      validation: (Rule) => Rule.required(),
       readOnly: true,
     }),
     defineField({

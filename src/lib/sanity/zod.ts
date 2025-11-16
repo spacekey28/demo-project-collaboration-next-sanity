@@ -65,6 +65,17 @@ export const siteSettingsSchema = z.object({
 
 export type SiteSettings = z.infer<typeof siteSettingsSchema>;
 
+// Home Page Schema (hero fields)
+export const homePageSchema = z.object({
+  _id: z.string(),
+  _type: z.literal("pageHome"),
+  heroTitle: z.string(),
+  heroSubtitle: z.string(),
+  cta: z.string().nullable().optional(),
+});
+
+export type HomePage = z.infer<typeof homePageSchema>;
+
 // Feature Schema
 export const featureSchema = z.object({
   _id: z.string(),
