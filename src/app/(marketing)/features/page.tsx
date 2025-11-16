@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import Footer from "@/components/common/footer";
 import Header from "@/components/common/header";
 import { Section } from "@/components/common/section";
@@ -5,6 +7,12 @@ import { FeatureCard } from "@/components/marketing/feature-card";
 import { client } from "@/lib/sanity/client";
 import { allFeaturesQuery } from "@/lib/sanity/queries";
 import { type Feature, featureSchema } from "@/lib/sanity/zod";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Features",
+  description: "Explore what you can do with our platform.",
+});
 
 export default async function FeaturesPage() {
   const features = await client.fetch(allFeaturesQuery);
