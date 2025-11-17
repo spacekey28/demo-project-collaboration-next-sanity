@@ -3,12 +3,14 @@ import {
   type PortableTextReactComponents,
 } from "@portabletext/react";
 import Image from "next/image";
-import type { PortableTextBlock } from "sanity";
+import type { PortableTextBlock, PortableTextObject } from "sanity";
 
 import { urlFor } from "@/lib/sanity/client";
 
+type PortableTextValue = Array<PortableTextBlock | PortableTextObject>;
+
 type PortableTextRendererProps = {
-  value: PortableTextBlock[];
+  value: PortableTextValue;
 };
 
 const components: PortableTextReactComponents = {
@@ -79,9 +81,10 @@ export function PortableTextRenderer({ value }: PortableTextRendererProps) {
   if (!value?.length) {
     return null;
   }
+  const typedValue = value as PortableTextBlock[];
   return (
     <div className="prose prose-neutral dark:prose-invert max-w-none">
-      <PortableText value={value} components={components} />
+      <PortableText value={typedValue} components={components} />
     </div>
   );
 }

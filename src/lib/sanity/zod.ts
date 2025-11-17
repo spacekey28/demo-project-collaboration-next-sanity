@@ -8,6 +8,7 @@ import { z } from "zod";
 // Common schemas
 const imageSchema = z.object({
   _type: z.literal("image"),
+  _key: z.string().optional(),
   asset: z.object({
     _ref: z.string(),
     _type: z.literal("reference"),
