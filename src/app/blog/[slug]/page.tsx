@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { PortableTextBlock, PortableTextObject } from "sanity";
+import type { PortableTextBlock } from "sanity";
 
 import { AuthorBio } from "@/components/blog/author-bio";
 import { PortableTextRenderer } from "@/components/blog/portable-text-renderer";
@@ -38,15 +38,15 @@ export async function generateMetadata({
   });
 }
 
-type PortableTextValue = Array<PortableTextBlock | PortableTextObject>;
-
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const post = await fetchPost(params.slug);
   if (!post) {
     notFound();
   }
 
-  const portableContent = (post.content ?? []) as PortableTextValue;
+  const portableContent = Array.isArray(post.content)
+    ? (post.content as PortableTextBlock[])
+    : [];
   const readingTime = calculateReadingTime(
     portableTextToPlainText(portableContent),
   );
@@ -72,7 +72,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               )}
             </div>
 
-            {post.content && <PortableTextRenderer value={portableContent} />}
+            {portableContent.length > 0 && (
+              <PortableTextRenderer value={portableContent} />
+            )}
 
             {post.author && <AuthorBio author={post.author} />}
           </article>
@@ -92,22 +94,16 @@ async function fetchPost(slug: string): Promise<BlogPostWithAuthor | null> {
   return null;
 }
 
-function portableTextToPlainText(blocks: PortableTextValue): string {
+function portableTextToPlainText(blocks: PortableTextBlock[]): string {
   return blocks
     .map((block) => {
-      if (
-        !block ||
-        typeof block !== "object" ||
-        !("children" in block) ||
-        !Array.isArray(block.children)
-      ) {
+      if (!Array.isArray(block.children)) {
         return "";
       }
       return (
         block.children
           .map((child) => {
             if (
-              child &&
               typeof child === "object" &&
               "text" in child &&
               typeof child.text === "string"
