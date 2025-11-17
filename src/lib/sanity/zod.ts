@@ -8,6 +8,7 @@ import { z } from "zod";
 // Common schemas
 const imageSchema = z.object({
   _type: z.literal("image"),
+  _key: z.string(),
   asset: z.object({
     _ref: z.string(),
     _type: z.literal("reference"),
@@ -201,12 +202,14 @@ export const caseStudySchema = z.object({
 export type CaseStudy = z.infer<typeof caseStudySchema>;
 
 // Doc Page Schema
-export const docPageReferenceSchema = z.object({
-  _type: z.literal("reference"),
-  _ref: z.string(),
-  _weak: z.boolean().optional(),
-  _strengthenOnPublish: z.boolean().optional(),
-});
+const docParentSchema = z
+  .object({
+    _id: z.string(),
+    title: z.string(),
+    slug: slugSchema,
+  })
+  .nullable()
+  .optional();
 
 export const docPageSchema = z.object({
   _id: z.string(),
@@ -219,10 +222,21 @@ export const docPageSchema = z.object({
   category: z.string().nullable().optional(),
   order: z.number().nullable().optional(),
   content: portableTextSchema,
-  parent: docPageReferenceSchema.nullable().optional(),
+  parent: docParentSchema,
 });
 
 export type DocPage = z.infer<typeof docPageSchema>;
+
+export const docNavItemSchema = z.object({
+  _id: z.string(),
+  title: z.string(),
+  slug: slugSchema,
+  category: z.string().nullable().optional(),
+  order: z.number().nullable().optional(),
+  parent: docParentSchema,
+});
+
+export type DocNavItem = z.infer<typeof docNavItemSchema>;
 
 // Contact Submission Schema
 export const contactSubmissionSchema = z.object({
