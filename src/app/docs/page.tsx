@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { PortableTextBlock, PortableTextObject } from "sanity";
+import type { PortableTextBlock } from "sanity";
 
 import Footer from "@/components/common/footer";
 import Header from "@/components/common/header";
@@ -90,32 +90,38 @@ function groupByCategory(pages: DocPage[]): [string | null, DocPage[]][] {
   ]);
 }
 
-type DocPortableValue = Array<PortableTextBlock | PortableTextObject>;
+type DocPortableValue = PortableTextBlock[];
+type DocPortableChild = PortableTextBlock["children"] extends
+  | (infer U)[]
+  | undefined
+  ? U
+  : never;
 
 function getPreviewSnippet(
   blocks: DocPortableValue | null | undefined,
 ): string {
   if (!blocks?.length) return "";
   for (const block of blocks) {
-    if (block && block._type === "block" && "children" in block) {
-      const text =
-        block.children
-          ?.map((child: PortableTextObject | string) => {
-            if (typeof child === "string") return child;
-            if (
-              child &&
-              typeof child === "object" &&
-              "text" in child &&
-              typeof child.text === "string"
-            ) {
-              return child.text;
-            }
-            return "";
-          })
-          .join("")
-          .trim() ?? "";
+    if (block._type === "block") {
+      const text = flattenPortableChildren(block.children);
       if (text) return text.slice(0, 120);
     }
   }
   return "";
+}
+
+function flattenPortableChildren(
+  children: PortableTextBlock["children"] | undefined,
+): string {
+  if (!children) return "";
+  return (children as DocPortableChild[])
+    .map((child) => {
+      if (child && typeof child === "object" && "text" in child) {
+        const value = (child as { text?: unknown }).text;
+        return typeof value === "string" ? value : "";
+      }
+      return "";
+    })
+    .join("")
+    .trim();
 }

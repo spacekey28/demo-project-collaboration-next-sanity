@@ -102,12 +102,13 @@ async function fetchPosts({
   currentPage: number;
 }> {
   if (tag) {
-    const raw = await client.fetch<unknown[]>(blogPostsByTagQuery, {
-      tag,
-    } as Record<string, unknown>);
+    const raw = await client.fetch<unknown[]>(
+      blogPostsByTagQuery as string,
+      { tag } as Record<string, unknown>,
+    );
     const parsed = (Array.isArray(raw) ? raw : []) as unknown[];
     const safePosts = parsed
-      .map((post) => blogPostWithAuthorSchema.safeParse(post))
+      .map((post: unknown) => blogPostWithAuthorSchema.safeParse(post))
       .filter(
         (result): result is { success: true; data: BlogPostWithAuthor } =>
           result.success,
@@ -129,15 +130,15 @@ async function fetchPosts({
   const end = start + POSTS_PER_PAGE;
 
   const [rawPosts, totalCount] = await Promise.all([
-    client.fetch<unknown[]>(blogPostsPaginatedQuery, { start, end } as Record<
-      string,
-      unknown
-    >),
+    client.fetch<unknown[]>(
+      blogPostsPaginatedQuery as string,
+      { start, end } as Record<string, unknown>,
+    ),
     client.fetch<number>(blogPostCountQuery),
   ]);
 
   const posts = (Array.isArray(rawPosts) ? rawPosts : [])
-    .map((post) => blogPostWithAuthorSchema.safeParse(post))
+    .map((post: unknown) => blogPostWithAuthorSchema.safeParse(post))
     .filter(
       (result): result is { success: true; data: BlogPostWithAuthor } =>
         result.success,
