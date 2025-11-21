@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { BlogCard } from "@/components/blog/blog-card";
 import { BlogTags } from "@/components/blog/blog-tags";
+import { BlogSearch } from "@/components/blog/search";
 import Footer from "@/components/common/footer";
 import Header from "@/components/common/header";
 import { Section } from "@/components/common/section";
@@ -12,6 +13,8 @@ import {
   blogPostCountQuery,
   blogPostsByTagQuery,
   blogPostsPaginatedQuery,
+  blogPostsSearchCountQuery,
+  blogPostsSearchQuery,
 } from "@/lib/sanity/queries";
 import {
   type BlogPostWithAuthor,
@@ -31,6 +34,7 @@ type BlogPageProps = {
   searchParams?: {
     page?: string;
     tag?: string;
+    search?: string;
   };
 };
 
@@ -38,11 +42,20 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const pageParam = Number(searchParams?.page) || 1;
   const currentPage = Math.max(1, pageParam);
   const tag = searchParams?.tag?.trim() || null;
+  const searchTerm = searchParams?.search?.trim() || null;
 
   const [tags, postsData] = await Promise.all([
     client.fetch(allBlogTagsQuery),
-    fetchPosts({ page: currentPage, tag }),
+    fetchPosts({ page: currentPage, tag, search: searchTerm }),
   ]);
+
+  // Fetch all posts for search component (for client-side filtering in the dialog)
+  const allPostsForSearch = searchTerm
+    ? postsData.posts
+    : await client.fetch<unknown[]>(
+        blogPostsPaginatedQuery as string,
+        { start: 0, end: 50 } as Record<string, unknown>,
+      );
 
   return (
     <>
@@ -52,16 +65,40 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           title="Blog"
           description="Product updates, best practices, and guides for building better collaboration."
         >
-          <div className="mb-6">
-            <BlogTags
-              tags={tags ?? []}
-              activeTag={tag}
-              buildHref={(nextTag) => {
-                const params = new URLSearchParams();
-                if (nextTag) params.set("tag", nextTag);
-                return `/blog${params.size ? `?${params.toString()}` : ""}`;
-              }}
-            />
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex-1">
+              <BlogTags
+                tags={tags ?? []}
+                activeTag={tag}
+                buildHref={(nextTag) => {
+                  const params = new URLSearchParams();
+                  if (nextTag) params.set("tag", nextTag);
+                  if (searchTerm) params.set("search", searchTerm);
+                  return `/blog${params.size ? `?${params.toString()}` : ""}`;
+                }}
+              />
+            </div>
+            <div className="sm:w-auto">
+              <BlogSearch
+                posts={
+                  Array.isArray(allPostsForSearch)
+                    ? allPostsForSearch
+                        .map((post: unknown) =>
+                          blogPostWithAuthorSchema.safeParse(post),
+                        )
+                        .filter(
+                          (
+                            result,
+                          ): result is {
+                            success: true;
+                            data: BlogPostWithAuthor;
+                          } => result.success,
+                        )
+                        .map((result) => result.data)
+                    : postsData.posts
+                }
+              />
+            </div>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
@@ -75,12 +112,17 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
               currentPage={postsData.currentPage}
               totalPages={postsData.totalPages}
               activeTag={tag}
+              searchTerm={searchTerm}
             />
           )}
 
           {postsData.posts.length === 0 && (
             <p className="text-muted-foreground text-center">
-              No posts found for this selection. Try a different tag.
+              {searchTerm
+                ? "No posts found matching your search. Try a different query."
+                : tag
+                  ? "No posts found for this tag. Try a different tag."
+                  : "No posts found."}
             </p>
           )}
         </Section>
@@ -93,14 +135,50 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 async function fetchPosts({
   page,
   tag,
+  search,
 }: {
   page: number;
   tag: string | null;
+  search: string | null;
 }): Promise<{
   posts: BlogPostWithAuthor[];
   totalPages: number;
   currentPage: number;
 }> {
+  // Handle search query
+  if (search) {
+    const searchTerm = `*${search}*`; // GROQ match uses wildcards
+    const [rawPosts, totalCount] = await Promise.all([
+      client.fetch<unknown[]>(
+        blogPostsSearchQuery as string,
+        { searchTerm } as Record<string, unknown>,
+      ),
+      client.fetch<number>(
+        blogPostsSearchCountQuery as string,
+        { searchTerm } as Record<string, unknown>,
+      ),
+    ]);
+
+    const allPosts = (Array.isArray(rawPosts) ? rawPosts : [])
+      .map((post: unknown) => blogPostWithAuthorSchema.safeParse(post))
+      .filter(
+        (result): result is { success: true; data: BlogPostWithAuthor } =>
+          result.success,
+      )
+      .map((result) => result.data);
+
+    const totalPages = Math.max(
+      1,
+      Math.ceil((totalCount ?? 0) / POSTS_PER_PAGE),
+    );
+    const safePage = Math.min(page, totalPages);
+    const start = (safePage - 1) * POSTS_PER_PAGE;
+    const posts = allPosts.slice(start, start + POSTS_PER_PAGE);
+
+    return { posts, totalPages, currentPage: safePage };
+  }
+
+  // Handle tag filter
   if (tag) {
     const raw = await client.fetch<unknown[]>(
       blogPostsByTagQuery as string,
@@ -155,10 +233,12 @@ function Pagination({
   currentPage,
   totalPages,
   activeTag,
+  searchTerm,
 }: {
   currentPage: number;
   totalPages: number;
   activeTag: string | null;
+  searchTerm: string | null;
 }) {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
@@ -166,6 +246,7 @@ function Pagination({
     const params = new URLSearchParams();
     if (page > 1) params.set("page", String(page));
     if (activeTag) params.set("tag", activeTag);
+    if (searchTerm) params.set("search", searchTerm);
     const query = params.toString();
     return `/blog${query ? `?${query}` : ""}`;
   }

@@ -189,10 +189,11 @@ export const blogPostsByTagQuery = `*[_type == "blogPost" && defined(publishedAt
   tags
 }`;
 
+// Blog search query - searches across title, content (portable text), and tags
 export const blogPostsSearchQuery = `*[_type == "blogPost" && defined(publishedAt) && (
   title match $searchTerm ||
   excerpt match $searchTerm ||
-  array::compact(string::split((pt::text(content)), " "))[0..100] match $searchTerm ||
+  pt::text(content) match $searchTerm ||
   $searchTerm in tags
 )] | order(publishedAt desc) {
   _id,
@@ -214,6 +215,13 @@ export const blogPostsSearchQuery = `*[_type == "blogPost" && defined(publishedA
   excerpt,
   tags
 }`;
+
+export const blogPostsSearchCountQuery = `count(*[_type == "blogPost" && defined(publishedAt) && (
+  title match $searchTerm ||
+  excerpt match $searchTerm ||
+  pt::text(content) match $searchTerm ||
+  $searchTerm in tags
+)])`;
 
 export const allBlogTagsQuery = `array::unique(*[_type == "blogPost" && defined(publishedAt)].tags[] | order(@ asc))`;
 
