@@ -1,5 +1,6 @@
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
+import { cookies } from "next/headers";
 import { createClient } from "next-sanity";
 
 import { env } from "@/env.mjs";
@@ -45,12 +46,28 @@ export const previewClient = createClient({
 });
 
 /**
+ * Check if preview mode is enabled by checking for the __prerender_bypass cookie
+ * This cookie is set by Next.js when preview mode is enabled
+ * @returns Whether preview mode is active
+ */
+export async function isPreviewMode(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.has("__prerender_bypass");
+  } catch {
+    // If cookies() fails (e.g., in middleware), return false
+    return false;
+  }
+}
+
+/**
  * Get the appropriate client based on preview mode
- * @param preview - Whether to use preview client
+ * @param preview - Whether to use preview client (defaults to checking preview mode)
  * @returns Sanity client instance
  */
-export function getClient(preview = false) {
-  if (preview && env.SANITY_API_READ_TOKEN) {
+export async function getClient(preview?: boolean) {
+  const shouldPreview = preview ?? (await isPreviewMode());
+  if (shouldPreview && env.SANITY_API_READ_TOKEN) {
     return previewClient;
   }
   return client;

@@ -16,7 +16,7 @@ import {
   TableOfContents,
   type TocHeading,
 } from "@/components/docs/table-of-contents";
-import { client } from "@/lib/sanity/client";
+import { getClient, isPreviewMode } from "@/lib/sanity/client";
 import { docNavigationQuery, docPageBySlugQuery } from "@/lib/sanity/queries";
 import {
   type DocNavItem,
@@ -46,9 +46,11 @@ export async function generateMetadata({
 }
 
 export default async function DocPage({ params }: DocPageProps) {
+  const preview = await isPreviewMode();
+  const sanityClient = await getClient(preview);
   const [doc, navItemsRaw] = await Promise.all([
     fetchDoc(params.slug),
-    client.fetch(docNavigationQuery),
+    sanityClient.fetch(docNavigationQuery),
   ]);
   if (!doc) notFound();
 
@@ -90,7 +92,9 @@ export default async function DocPage({ params }: DocPageProps) {
 }
 
 async function fetchDoc(slug: string): Promise<DocPage | null> {
-  const data = await client.fetch(docPageBySlugQuery, { slug });
+  const preview = await isPreviewMode();
+  const sanityClient = await getClient(preview);
+  const data = await sanityClient.fetch(docPageBySlugQuery, { slug });
   const parsed = docPageSchema.safeParse(data);
   return parsed.success ? parsed.data : null;
 }

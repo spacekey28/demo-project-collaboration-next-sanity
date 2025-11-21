@@ -147,6 +147,51 @@ export const blogPostBySlugQuery = `*[_type == "blogPost" && slug.current == $sl
   tags
 }`;
 
+// Preview mode query - allows draft content (without publishedAt requirement)
+export const blogPostBySlugPreviewQuery = `*[_type == "blogPost" && slug.current == $slug][0] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  "author": author->{
+    _id,
+    name,
+    slug,
+    photo,
+    bio
+  },
+  publishedAt,
+  updatedAt,
+  coverImage,
+  excerpt,
+  content,
+  tags
+}`;
+
+// Preview mode query - allows draft content
+export const blogPostsPaginatedPreviewQuery = `*[_type == "blogPost"] | order(_updatedAt desc, publishedAt desc) [$start...$end] {
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  "author": author->{
+    _id,
+    name,
+    slug,
+    photo,
+    bio
+  },
+  publishedAt,
+  updatedAt,
+  coverImage,
+  excerpt,
+  tags
+}`;
+
 export const blogPostsPaginatedQuery = `*[_type == "blogPost" && defined(publishedAt)] | order(publishedAt desc) [$start...$end] {
   _id,
   _type,
@@ -384,29 +429,6 @@ export const contactSubmissionsByStatusQuery = `*[_type == "contactSubmission" &
   message,
   submittedAt,
   status
-}`;
-
-// Preview Mode Queries (for draft content)
-export const blogPostBySlugPreviewQuery = `*[_type == "blogPost" && slug.current == $slug][0] {
-  _id,
-  _type,
-  _createdAt,
-  _updatedAt,
-  title,
-  slug,
-  "author": author->{
-    _id,
-    name,
-    slug,
-    photo,
-    bio
-  },
-  publishedAt,
-  updatedAt,
-  coverImage,
-  excerpt,
-  content,
-  tags
 }`;
 
 export const docPageBySlugPreviewQuery = `*[_type == "docPage" && slug.current == $slug][0] {

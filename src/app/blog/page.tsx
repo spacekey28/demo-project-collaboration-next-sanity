@@ -7,11 +7,12 @@ import { BlogSearch } from "@/components/blog/search";
 import Footer from "@/components/common/footer";
 import Header from "@/components/common/header";
 import { Section } from "@/components/common/section";
-import { client } from "@/lib/sanity/client";
+import { getClient, isPreviewMode } from "@/lib/sanity/client";
 import {
   allBlogTagsQuery,
   blogPostCountQuery,
   blogPostsByTagQuery,
+  blogPostsPaginatedPreviewQuery,
   blogPostsPaginatedQuery,
   blogPostsSearchCountQuery,
   blogPostsSearchQuery,
@@ -44,16 +45,22 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const tag = searchParams?.tag?.trim() || null;
   const searchTerm = searchParams?.search?.trim() || null;
 
+  const preview = await isPreviewMode();
+  const sanityClient = await getClient(preview);
+
   const [tags, postsData] = await Promise.all([
-    client.fetch(allBlogTagsQuery),
-    fetchPosts({ page: currentPage, tag, search: searchTerm }),
+    sanityClient.fetch(allBlogTagsQuery),
+    fetchPosts({ page: currentPage, tag, search: searchTerm, preview }),
   ]);
 
   // Fetch all posts for search component (for client-side filtering in the dialog)
+  const query = preview
+    ? blogPostsPaginatedPreviewQuery
+    : blogPostsPaginatedQuery;
   const allPostsForSearch = searchTerm
     ? postsData.posts
-    : await client.fetch<unknown[]>(
-        blogPostsPaginatedQuery as string,
+    : await sanityClient.fetch<unknown[]>(
+        query as string,
         { start: 0, end: 50 } as Record<string, unknown>,
       );
 
@@ -145,24 +152,29 @@ async function fetchPosts({
   page,
   tag,
   search,
+  preview = false,
 }: {
   page: number;
   tag: string | null;
   search: string | null;
+  preview?: boolean;
 }): Promise<{
   posts: BlogPostWithAuthor[];
   totalPages: number;
   currentPage: number;
 }> {
+  const sanityClient = await getClient(preview);
   // Handle search query
   if (search) {
     const searchTerm = `*${search}*`; // GROQ match uses wildcards
+    // For preview mode, we need to allow draft content in search
+    // The search queries already handle this via GROQ filtering
     const [rawPosts, totalCount] = await Promise.all([
-      client.fetch<unknown[]>(
+      sanityClient.fetch<unknown[]>(
         blogPostsSearchQuery as string,
         { searchTerm } as Record<string, unknown>,
       ),
-      client.fetch<number>(
+      sanityClient.fetch<number>(
         blogPostsSearchCountQuery as string,
         { searchTerm } as Record<string, unknown>,
       ),
@@ -189,7 +201,7 @@ async function fetchPosts({
 
   // Handle tag filter
   if (tag) {
-    const raw = await client.fetch<unknown[]>(
+    const raw = await sanityClient.fetch<unknown[]>(
       blogPostsByTagQuery as string,
       { tag } as Record<string, unknown>,
     );
@@ -216,12 +228,15 @@ async function fetchPosts({
   const start = (page - 1) * POSTS_PER_PAGE;
   const end = start + POSTS_PER_PAGE;
 
+  const paginatedQuery = preview
+    ? blogPostsPaginatedPreviewQuery
+    : blogPostsPaginatedQuery;
   const [rawPosts, totalCount] = await Promise.all([
-    client.fetch<unknown[]>(
-      blogPostsPaginatedQuery as string,
+    sanityClient.fetch<unknown[]>(
+      paginatedQuery as string,
       { start, end } as Record<string, unknown>,
     ),
-    client.fetch<number>(blogPostCountQuery),
+    sanityClient.fetch<number>(blogPostCountQuery),
   ]);
 
   const posts = (Array.isArray(rawPosts) ? rawPosts : [])
