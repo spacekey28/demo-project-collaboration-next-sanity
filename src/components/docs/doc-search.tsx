@@ -101,7 +101,17 @@ export function DocSearch({
       >
         <CommandInput placeholder="Search documentation..." />
         <CommandList>
-          <CommandEmpty>No documentation found.</CommandEmpty>
+          <CommandEmpty>
+            <div className="flex flex-col items-center gap-2 py-6">
+              <p className="text-muted-foreground text-sm">
+                No documentation found.
+              </p>
+              <p className="text-muted-foreground text-xs">
+                Try searching with different keywords or browse all
+                documentation.
+              </p>
+            </div>
+          </CommandEmpty>
           {docs.length > 0 && (
             <CommandGroup heading="Documentation">
               {docs.map((doc) => {

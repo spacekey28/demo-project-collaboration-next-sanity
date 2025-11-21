@@ -76,7 +76,16 @@ export function BlogSearch({
       >
         <CommandInput placeholder="Search blog posts..." />
         <CommandList>
-          <CommandEmpty>No posts found.</CommandEmpty>
+          <CommandEmpty>
+            <div className="flex flex-col items-center gap-2 py-6">
+              <p className="text-muted-foreground text-sm">
+                No blog posts found.
+              </p>
+              <p className="text-muted-foreground text-xs">
+                Try searching with different keywords or browse all posts.
+              </p>
+            </div>
+          </CommandEmpty>
           <CommandGroup heading="Posts">
             {posts.map((post) => (
               <CommandItem

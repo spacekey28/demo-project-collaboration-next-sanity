@@ -117,13 +117,22 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           )}
 
           {postsData.posts.length === 0 && (
-            <p className="text-muted-foreground text-center">
-              {searchTerm
-                ? "No posts found matching your search. Try a different query."
-                : tag
-                  ? "No posts found for this tag. Try a different tag."
-                  : "No posts found."}
-            </p>
+            <div className="text-muted-foreground flex flex-col items-center gap-3 py-12 text-center">
+              <p className="text-base font-medium">
+                {searchTerm
+                  ? `No posts found for "${searchTerm}"`
+                  : tag
+                    ? `No posts found for tag "${tag}"`
+                    : "No posts found"}
+              </p>
+              <p className="text-sm">
+                {searchTerm
+                  ? "Try searching with different keywords or browse all posts."
+                  : tag
+                    ? "Try selecting a different tag or browse all posts."
+                    : "Check back later for new posts."}
+              </p>
+            </div>
           )}
         </Section>
       </main>

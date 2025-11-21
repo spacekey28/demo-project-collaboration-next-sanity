@@ -90,10 +90,15 @@ export default async function DocsIndexPage({ searchParams }: DocsPageProps) {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center">
-                  No documentation found matching your search. Try a different
-                  query.
-                </p>
+                <div className="text-muted-foreground flex flex-col items-center gap-3 py-12 text-center">
+                  <p className="text-base font-medium">
+                    No documentation found for &quot;{searchTerm}&quot;
+                  </p>
+                  <p className="text-sm">
+                    Try searching with different keywords or browse all
+                    documentation.
+                  </p>
+                </div>
               )}
             </div>
           ) : (
