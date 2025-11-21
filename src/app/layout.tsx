@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import type { ReactNode } from "react";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { fonts } from "@/lib/fonts";
 
 export const metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
