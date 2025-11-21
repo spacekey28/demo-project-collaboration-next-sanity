@@ -7,8 +7,11 @@ import { PortableTextRenderer } from "@/components/blog/portable-text-renderer";
 import Footer from "@/components/common/footer";
 import Header from "@/components/common/header";
 import { Section } from "@/components/common/section";
-import { client } from "@/lib/sanity/client";
-import { blogPostBySlugQuery } from "@/lib/sanity/queries";
+import { getClient, isPreviewMode } from "@/lib/sanity/client";
+import {
+  blogPostBySlugPreviewQuery,
+  blogPostBySlugQuery,
+} from "@/lib/sanity/queries";
 import {
   type BlogPostWithAuthor,
   blogPostWithAuthorSchema,
@@ -86,7 +89,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 }
 
 async function fetchPost(slug: string): Promise<BlogPostWithAuthor | null> {
-  const data = await client.fetch(blogPostBySlugQuery, { slug });
+  const preview = await isPreviewMode();
+  const sanityClient = await getClient(preview);
+  const query = preview ? blogPostBySlugPreviewQuery : blogPostBySlugQuery;
+  const data = await sanityClient.fetch(query, { slug });
   const parsed = blogPostWithAuthorSchema.safeParse(data);
   if (parsed.success) {
     return parsed.data;

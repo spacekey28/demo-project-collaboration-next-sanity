@@ -6,7 +6,7 @@ import Footer from "@/components/common/footer";
 import Header from "@/components/common/header";
 import { Section } from "@/components/common/section";
 import { DocSearch } from "@/components/docs/doc-search";
-import { client } from "@/lib/sanity/client";
+import { getClient, isPreviewMode } from "@/lib/sanity/client";
 import { allDocPagesQuery, docsSearchQuery } from "@/lib/sanity/queries";
 import { type DocPage, docPageSchema } from "@/lib/sanity/zod";
 import { buildMetadata } from "@/lib/seo";
@@ -26,13 +26,15 @@ type DocsPageProps = {
 export default async function DocsIndexPage({ searchParams }: DocsPageProps) {
   const searchTerm = searchParams?.search?.trim() || null;
 
+  const preview = await isPreviewMode();
+
   // Fetch pages - if searching, fetch search results; otherwise fetch all
   const pages = searchTerm
-    ? await fetchSearchResults(searchTerm)
-    : await fetchAllPages();
+    ? await fetchSearchResults(searchTerm, preview)
+    : await fetchAllPages(preview);
 
   // For search component, always fetch all pages for client-side filtering
-  const allPagesForSearch = searchTerm ? await fetchAllPages() : pages;
+  const allPagesForSearch = searchTerm ? await fetchAllPages(preview) : pages;
 
   const grouped = searchTerm ? null : groupByCategory(pages);
 
@@ -139,8 +141,9 @@ export default async function DocsIndexPage({ searchParams }: DocsPageProps) {
   );
 }
 
-async function fetchAllPages(): Promise<DocPage[]> {
-  const rawPages = await client.fetch(allDocPagesQuery);
+async function fetchAllPages(preview = false): Promise<DocPage[]> {
+  const sanityClient = await getClient(preview);
+  const rawPages = await sanityClient.fetch(allDocPagesQuery);
   return (Array.isArray(rawPages) ? rawPages : [])
     .map((item) => docPageSchema.safeParse(item))
     .filter(
@@ -149,9 +152,13 @@ async function fetchAllPages(): Promise<DocPage[]> {
     .map((result) => result.data);
 }
 
-async function fetchSearchResults(searchTerm: string): Promise<DocPage[]> {
+async function fetchSearchResults(
+  searchTerm: string,
+  preview = false,
+): Promise<DocPage[]> {
+  const sanityClient = await getClient(preview);
   const searchQuery = `*${searchTerm}*`; // GROQ match uses wildcards
-  const rawPages = await client.fetch<unknown[]>(
+  const rawPages = await sanityClient.fetch<unknown[]>(
     docsSearchQuery as string,
     { searchTerm: searchQuery } as Record<string, unknown>,
   );
