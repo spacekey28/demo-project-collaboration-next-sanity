@@ -308,7 +308,8 @@ export const docPagesByCategoryQuery = `*[_type == "docPage" && category == $cat
 
 export const docsSearchQuery = `*[_type == "docPage" && (
   title match $searchTerm ||
-  array::compact(string::split((pt::text(content)), " "))[0..100] match $searchTerm
+  pt::text(content) match $searchTerm ||
+  category match $searchTerm
 )] | order(category asc, title asc) {
   _id,
   _type,
@@ -318,12 +319,19 @@ export const docsSearchQuery = `*[_type == "docPage" && (
   slug,
   category,
   order,
+  content,
   "parent": parent->{
     _id,
     title,
     slug
   }
 }`;
+
+export const docsSearchCountQuery = `count(*[_type == "docPage" && (
+  title match $searchTerm ||
+  pt::text(content) match $searchTerm ||
+  category match $searchTerm
+)])`;
 
 export const docNavigationQuery = `*[_type == "docPage"] | order(category asc, order asc, title asc) {
   _id,
